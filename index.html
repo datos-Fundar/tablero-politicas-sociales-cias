@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prueba de deploy — sitio estático</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        margin: 2rem;
+        max-width: 40rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .ok {
+        color: #0a7;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="ok">Deploy estático operativo</h1>
+    <p>
+      Página de prueba (<code>index.html</code>) del repositorio
+      <strong>tablero-politicas-sociales-cias</strong>.
+    </p>
+    <p id="carga">Carga: <time id="ts"></time></p>
+    <script>
+      document.getElementById("ts").textContent = new Date().toISOString();
+    </script>
+  </body>
+</html>
