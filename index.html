@@ -1,37 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Prueba de deploy — sitio estático</title>
-    <style>
-      :root {
-        color-scheme: light dark;
-        font-family: system-ui, sans-serif;
-        line-height: 1.5;
-      }
-      body {
-        margin: 2rem;
-        max-width: 40rem;
-      }
-      h1 {
-        font-size: 1.25rem;
-        font-weight: 600;
-      }
-      .ok {
-        color: #0a7;
-      }
-    </style>
-  </head>
-  <body>
-    <h1 class="ok">Deploy estático operativo</h1>
-    <p>
-      Página de prueba (<code>index.html</code>) del repositorio
-      <strong>tablero-politicas-sociales-cias</strong>.
-    </p>
-    <p id="carga">Carga: <time id="ts"></time></p>
-    <script>
-      document.getElementById("ts").textContent = new Date().toISOString();
-    </script>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de las políticas sociales | CIAS - Fundar</title>
+<meta name="description" content="Tablero interactivo con la evolución de la inversión social no contributiva en la Argentina (2002-2025), por grupo etario y por programa. CIAS y Fundar.">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<header id="barra">
+  <div class="barra-in">
+    <div class="marcas">
+      <a href="https://cias.ar" target="_blank" rel="noopener" title="CIAS Instituto Universitario"><img class="logo-cias" alt="CIAS Instituto Universitario"></a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://fund.ar" target="_blank" rel="noopener" title="Fundar"><img class="logo-fundar" alt="Fundar"></a>
+    </div>
+    <nav id="menu" aria-label="Secciones">
+      <a href="#inicio">Datos</a>
+      <a href="#metodologia">Metodología</a>
+    </nav>
+    <button class="switch-tema" id="sw-tema" type="button" aria-label="Cambiar a modo oscuro" title="Modo oscuro">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2a8 8 0 1 0 0 16V2z"/><circle cx="10" cy="10" r="7.2" fill="none" stroke-width="1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="inicio">
+
+  <section class="intro">
+    <span data-editable="inicio.etiqueta" class="seccion">Tablero de datos | CIAS - Fundar</span>
+    <h1 data-editable="datos.meta.titulo" id="titulo"></h1>
+    <p data-editable="inicio.bajada" class="bajada">Cuánto invierte el Estado nacional en políticas sociales no contributivas, cómo se repartió esa inversión entre niñez, jóvenes y adultos y adultos mayores, cómo evolucionó en cada gobierno y qué pasó con los beneficiarios de los principales programas entre <span class="anio-ini"></span> y <span class="anio-fin"></span>.</p>
+  </section>
+
+  <!-- 1. Indicadores principales -->
+  <section id="resumen" class="bloque">
+    <div class="hero" id="hero"></div>
+  </section>
+
+  <!-- 2. Series históricas -->
+  <section id="evolucion" class="bloque">
+    <div class="bloque-hd">
+      <span data-editable="evolucion.etiqueta" class="seccion">Evolución <span class="anio-ini"></span>–<span class="anio-fin"></span></span>
+      <h2 data-editable="evolucion.titulo">¿Cómo cambió la inversión social?</h2>
+    </div>
+    <div class="grid2" id="graficos"></div>
+  </section>
+
+  <!-- 3. Comparación por gobierno -->
+  <section id="por-gobierno" class="bloque">
+    <div class="bloque-hd">
+      <span data-editable="gobiernos.etiqueta" class="seccion">Por gobierno</span>
+      <h2 data-editable="gobiernos.titulo">¿Cómo evolucionó en cada gobierno?</h2>
+      <p data-editable="gobiernos.bajada" class="bajada chica">Cada línea arranca en 100 en el último año del gobierno anterior. Elegí los gobiernos que quieras comparar.</p>
+    </div>
+    <div class="grid2" id="gobiernos"></div>
+  </section>
+
+  <!-- 4. Programas -->
+  <section id="programas" class="bloque">
+    <div class="bloque-hd fila">
+      <div>
+        <span data-editable="programas.etiqueta" class="seccion">Programas</span>
+        <h2 data-editable="programas.titulo">Beneficiarios y beneficios por programa</h2>
+        <p data-editable="programas.bajada" class="bajada chica">Cuántas personas cobran cada programa y cuánto cobran por mes. Tocá un programa para ver sus series y el gasto.</p>
+      </div>
+      <label class="ctl">
+        <span class="ctl-lbl">Ordenar por</span>
+        <select id="orden">
+          <option value="benef">Beneficiarios</option>
+          <option value="beneficio">Beneficio mensual</option>
+          <option value="var">Variación de beneficiarios</option>
+          <option value="nombre">Nombre</option>
+        </select>
+      </label>
+    </div>
+    <div class="grid2 bloque-cob" id="cobertura"></div>
+    <div class="prog-enc enc-benef" aria-hidden="true">
+      <span>Programa</span><span class="der">Beneficiarios <span class="anio-fin"></span></span><span class="der">Var. benef. <span class="anio-base"></span>-<span class="anio-fin"></span></span><span class="der">Beneficio <span class="anio-fin"></span></span><span class="der">Var. real <span class="anio-base"></span>-<span class="anio-fin"></span></span><span></span>
+    </div>
+    <div id="lista-prog" class="lista-prog lista-benef"></div>
+  </section>
+
+  <!-- 5. Población objetivo -->
+  <section id="poblacion" class="bloque">
+    <div class="bloque-hd">
+      <span data-editable="poblacion.etiqueta" class="seccion">Población objetivo</span>
+      <h2 data-editable="poblacion.titulo">Gasto por población objetivo</h2>
+      <p data-editable="poblacion.bajada" class="bajada chica">Tocá un grupo para ver su serie completa y qué programas incluye.</p>
+    </div>
+    <div class="prog-enc" aria-hidden="true">
+      <span>Población</span><span class="der">Monto <span class="anio-fin"></span></span><span>Peso en lo asignado a grupos</span><span class="der">Var. real <span class="anio-base"></span>-<span class="anio-fin"></span></span><span>Tendencia</span><span></span>
+    </div>
+    <div id="lista-pob" class="lista-prog"></div>
+  </section>
+
+  <!-- 6. Cita, documento e institucional -->
+  <section id="acerca" class="bloque">
+    <div class="cita card">
+      <div>
+        <span class="seccion">Cómo citar</span>
+        <p id="cita-texto"></p>
+      </div>
+      <div class="cita-acts">
+        <button class="btn" id="btn-copiar" type="button">Copiar cita</button>
+        <a class="btn btn-primario" id="btn-doc" target="_blank" rel="noopener">Leer el documento</a>
+      </div>
+    </div>
+
+    <div class="notas">
+      <div class="instituciones">
+        <div class="inst">
+          <a href="https://cias.ar" target="_blank" rel="noopener"><img class="logo-cias" alt="CIAS Instituto Universitario"></a>
+          <p><b>CIAS</b> (Instituto Universitario) produce investigación aplicada y formación para el desarrollo social y la acción pública.</p>
+          <a href="https://cias.ar" target="_blank" rel="noopener">cias.ar</a>
+        </div>
+        <div class="inst">
+          <a href="https://fund.ar" target="_blank" rel="noopener"><img class="logo-fundar" alt="Fundar"></a>
+          <p><b>Fundar</b> es un centro de estudios y diseño de políticas públicas que promueve una agenda de desarrollo sustentable e inclusivo para la Argentina.</p>
+          <a href="https://fund.ar" target="_blank" rel="noopener">fund.ar</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Pestaña aparte: metodología -->
+<main id="metodologia" class="vista-metodo" hidden>
+  <section class="intro">
+    <span data-editable="metodologia.etiqueta" class="seccion">Metodología</span>
+    <h1 data-editable="metodologia.titulo">Cómo se mide</h1>
+    <p data-editable="metodologia.bajada" class="bajada">Qué se considera inversión social no contributiva, cómo se expresan los montos y cómo se arma la apertura por categoría de gasto, por grupo etario y por programa.</p>
+  </section>
+  <section class="bloque metodo">
+    <ul id="notas-metodo" class="metodo-lista"></ul>
+    <h2 data-editable="metodologia.titulo_clasificacion">Programas por categoría de gasto y grupo etario</h2>
+    <p data-editable="metodologia.texto_clasificacion">Clasificación de los programas sociales estudiados según el tipo de gasto (categoría) y la población a la que se orientan (grupo etario). Basada en el anexo metodológico del Mapa de las Políticas Sociales 2023, con los programas creados después.</p>
+    <div class="tabla-scroll"><table class="tabla-metodo tabla-clasif" id="tabla-clasif"></table></div>
+    <h2 data-editable="metodologia.titulo_composicion">Composición de cada serie</h2>
+    <div class="tabla-scroll"><table class="tabla-metodo" id="tabla-metodo"></table></div>
+    <h2 data-editable="metodologia.titulo_fuentes">Fuentes</h2>
+    <p id="metodo-fuente"></p>
+    <p><a href="#inicio" class="btn">Volver al tablero</a></p>
+  </section>
+</main>
+
+<footer class="pie">
+  <span id="pie-fuente"></span>
+  <span id="pie-act"></span>
+</footer>
+
+<div id="tooltip" hidden></div>
+
+<script src="logo/logos.js"></script>
+<script src="datos/datos.js"></script>
+<script src="datos/textos_editados.js"></script>
+<script src="app.js"></script>
+</body>
 </html>
