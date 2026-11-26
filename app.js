@@ -403,8 +403,7 @@ const S = {
   grupo: peorGrupo().id, modoG2: 'lineas', orden: 'benef',
   abierto: {},                     // ítem abierto en cada lista desplegable (uno por vez)
   gob: null, gobSerie: 'total',    // gobiernos seleccionados (al abrir, todos)
-  vistaProg: {},                   // serie que se ve en el detalle de cada programa
-  cobGrupo: 'adultos', cobSel: {}  // gráfico de cobertura: grupo de edad y programas elegidos (por grupo)
+  vistaProg: {}                    // serie que se ve en el detalle de cada programa
 };
 let REDIBUJAR = [];                // [{ el, fn }]: se redibujan al cambiar el tema
 const registrar = (el, fn) => REDIBUJAR.push({ el, fn });
@@ -488,31 +487,6 @@ const G4 = {
     nombreTip: (se, k) => `${se.nombre} (${se.gob.base + k})`,
     fmtEje: t => nf0.format(t), fmtTip: v => v == null ? '—' : nf1.format(v),
     series: gobSel().map(g => ({ nombre: g.corto, color: g.color, gob: g, valores: indiceGob(g, serieGob()[2]) }))
-  })
-};
-// Cobertura por grupo de edad: programas del grupo apilados sobre la misma población
-const COB = D.cobertura_grupos || [];
-const PAL_COB = ['#466874', '#ED8688', '#C6BF93', '#3B9E78'];
-const cobGrupo = () => COB.find(g => g.id === S.cobGrupo) || COB[0];
-const cobSel = () => {
-  const g = cobGrupo();
-  if (!S.cobSel[g.id]) S.cobSel[g.id] = new Set(g.series.map(s => s.id));
-  return g.series.filter(s => S.cobSel[g.id].has(s.id));
-};
-const colorCob = s => PAL_COB[cobGrupo().series.indexOf(s) % PAL_COB.length];
-const G5 = {
-  clave: () => 'g5.' + cobGrupo().id,
-  titulo: () => `Cobertura de los programas sociales: ${cobGrupo().nombre.toLowerCase()}, ${ANIOS[0]}–${A_FIN}`,
-  subtitulo: () => `Beneficios de cada programa por cada 100 ${cobGrupo().poblacion_txt}`,
-  nombre: () => 'g5_cobertura_' + cobGrupo().id,
-  fuenteExtra: M.fuente_poblacion,
-  nota: 'Una persona que cobra más de un programa se cuenta una vez por programa, por lo que el total es un máximo de la cobertura.',
-  dibujar: root => graficoBarras(root, {
-    aria: 'Gráfico de barras apiladas de la cobertura de los programas sociales por grupo de edad',
-    // Unidad: beneficios por cada 100 personas del grupo (no %: una persona puede cobrar más de un programa)
-    fmtEje: (t, st) => (st < 1 ? nf1 : nf0).format(t), fmtTip: v => v == null ? '—' : nf1.format(v) + ' por cada 100', etiquetaVar: null, etiquetaTotal: 'Total',
-    extraTip: i => ttFila(null, 'Población del grupo', fPersonas(cobGrupo().poblacion[i])),
-    series: cobSel().map(s => ({ nombre: s.nombre, color: colorCob(s), valores: s.cobertura }))
   })
 };
 // Clave de cada texto de un gráfico (def.clave puede depender de lo que esté seleccionado)
@@ -601,8 +575,6 @@ function textosFijos() {
     `La apertura por <b>grupo etario</b> asigna cada programa a la población a la que se dirige. ` +
       GRUPOS.map(g => `<b>${esc(g.largo)}</b>: ${esc(g.composicion || '')}.`).join(' '),
     `Las pensiones para madres de siete o más hijos forman parte del total pero no se asignan a ningún grupo etario. Por eso la participación de cada grupo se calcula sobre la suma de los tres grupos (el gasto que se pudo clasificar), no sobre el total.`,
-    `<b>Cobertura</b>: beneficiarios del programa sobre la población del rango de edad al que se dirige (AUH: 0 a 17 años; PROGRESAR: 18 a 24; pensiones por invalidez y planes de cooperativas: 18 a 64; PUAM: 65 y más; moratoria: mujeres de 60 y más y varones de 65 y más). No mide la cobertura sobre quienes cumplen todos los requisitos (por ejemplo, ingresos o situación laboral), sino sobre todo el grupo de edad. No se calcula para la Prestación Alimentar, cuyos beneficiarios son familias. ${esc(M.fuente_poblacion)}`,
-    `El <b>gráfico de cobertura por grupo de edad</b> divide los beneficiarios de cada programa por la misma población (niñez: 0 a 17 años; jóvenes y adultos: 18 a 64; adultos mayores: mujeres de 60 y más y varones de 65 y más), por eso las barras se pueden apilar. La suma indica cuántos beneficios hay por cada 100 personas del grupo: si una persona cobra dos programas se cuenta dos veces, así que la suma es un techo de la cobertura. La AUH incluye la AUH por discapacidad y la Asignación por Embarazo.`,
     `<b>Beneficiarios</b>: promedio anual de personas que cobraron cada programa (en la Prestación Alimentar, familias). <b>Beneficio</b>: monto mensual promedio del año, en ${esc(M.unidad_beneficio.replace(' por mes', ''))}; en las pensiones incluye bonos. En los programas que agrupan varias líneas (planes de cooperativas), el beneficio es el promedio de los programas vigentes ponderado por beneficiarios.`
   ];
   $('#notas-metodo').innerHTML = notas.map((n, k) => {
@@ -626,7 +598,7 @@ function textosFijos() {
       previa = cat;
       return fila;
     }).join('') + '</tbody>';
-  $('#metodo-fuente').textContent = M.fuente + ' Deflactor: ' + M.deflactor + '. ' + M.fuente_pbi + ' ' + M.fuente_poblacion;
+  $('#metodo-fuente').textContent = M.fuente + ' Deflactor: ' + M.deflactor + '. ' + M.fuente_pbi;
 }
 
 // Pestañas: tablero principal y metodología (por el ancla de la URL)
@@ -725,39 +697,6 @@ function seccionGobiernos() {
 }
 
 // Programas: beneficiarios y nivel de beneficio al frente; el gasto, en el detalle
-function seccionCobertura() {
-  if (!COB.length) return;
-  tarjeta($('#cobertura'), G5, {
-    controles: (c, redibujar) => {
-      segmentos(c, COB.map(g => [g.id, g.nombre]), S.cobGrupo, v => { S.cobGrupo = v; chipsCob(); redibujar(); }, 'Grupo de edad');
-      const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Programas' }, c);
-      const chipsCob = () => {
-        chips.innerHTML = '';
-        const g = cobGrupo(), sel = S.cobSel[g.id] || (cobSel(), S.cobSel[g.id]);
-        g.series.forEach(s => {
-          const b = h('button', { class: 'chip-btn', type: 'button', 'aria-pressed': String(sel.has(s.id)) }, chips,
-            `<i style="background:${colorCob(s)}"></i>${esc(s.nombre)}`);
-          b.onclick = () => {
-            if (sel.has(s.id)) { if (sel.size === 1) return aviso('Elegí al menos un programa'); sel.delete(s.id); }
-            else sel.add(s.id);
-            b.setAttribute('aria-pressed', String(sel.has(s.id)));
-            redibujar();
-          };
-        });
-      };
-      chipsCob();
-    },
-    csv: () => {
-      const g = cobGrupo(), ss = cobSel();
-      descargarCSV(G5.nombre(), G5.titulo(),
-        ['anio', 'poblacion_grupo', ...ss.map(s => s.id + '_beneficiarios'), ...ss.map(s => s.id + '_por_cada_100'), 'total_por_cada_100'],
-        ANIOS.map((a, i) => [a, g.poblacion[i], ...ss.map(s => s.beneficiarios[i]), ...ss.map(s => s.cobertura[i]),
-          ss.some(s => s.cobertura[i] != null) ? ss.reduce((t, s) => t + (s.cobertura[i] || 0), 0) : null]),
-        { unidad: `beneficios por cada 100 ${g.poblacion_txt} (una persona que cobra dos programas se cuenta dos veces)`, fuenteExtra: M.fuente_poblacion });
-    }
-  }).classList.add('card-ancha');
-}
-
 function seccionProgramas() {
   const sel = $('#orden');
   sel.value = S.orden;
@@ -883,13 +822,6 @@ function defGasto(p, color, nota) {
 function detallePrograma(det, p, color) {
   const b = p.beneficiarios, n = p.beneficio, g = p.valores;
   const info = h('div', {}, det);
-  const c = p.cobertura;
-  if (c && c[ULT] != null) {
-    const dif = c[I_BASE] == null ? null : c[ULT] - c[I_BASE];
-    h('p', { class: 'cobertura' }, info,
-      `<span class="cob-lbl">Cobertura ${A_FIN}</span><b>${nf1.format(c[ULT])}%</b> del total de ${esc(p.poblacion_ref_txt)}.` +
-      (dif == null ? '' : ` <span class="${clase(dif)}">${signo(dif)}${nf1.format(Math.abs(dif))} puntos</span> respecto de ${A_BASE}.`));
-  }
   const vb = varPct(b[ULT], b[PREV]), vn = varPct(n[ULT], n[PREV]), vg = varPct(g[ULT], g[I_BASE]);
   h('dl', { class: 'datos-prog' }, info,
     dato(`Gasto ${A_FIN}`, `${fMonto(g[ULT])} <small>billones</small>`) +
@@ -918,18 +850,6 @@ function detallePrograma(det, p, color) {
     },
     gasto: defGasto(p, color, nota('gasto'))
   };
-  if (c) {
-    const ref = p.poblacion_ref;
-    defs.cobertura = {
-      etiqueta: 'Cobertura', clave: base + '.cobertura', titulo: () => `Cobertura de ${p.en || p.corto}, ${rango()}`,
-      subtitulo: () => `En % del total de ${p.poblacion_ref_txt}`,
-      nombre: () => base + '_cobertura', fuenteExtra: M.fuente_poblacion, nota: nota('cobertura'),
-      dibujar: (root, alto) => graficoBarras(root, { alto, aria: 'Cobertura de ' + p.corto, fmtEje: fmtEjePct,
-        fmtTip: v => v == null ? '—' : nf1.format(v) + '%', etiquetaVar: null, series: [{ nombre: 'Cobertura', color, valores: c }] }),
-      csv: () => descargarCSV(base + '_cobertura', 'Cobertura de ' + p.nombre, ['anio', 'beneficiarios', 'poblacion_referencia', 'cobertura_pct'],
-        ANIOS.map((a, i) => [a, b[i], ref[i], c[i]]), { unidad: `% del total de ${p.poblacion_ref_txt}`, fuenteExtra: M.fuente_poblacion, nota: notaDe(defs.cobertura) })
-    };
-  }
   graficoDetalle(det, defs, S.vistaProg[p.id] || 'benef', v => { S.vistaProg[p.id] = v; });
 }
 
@@ -1083,7 +1003,6 @@ aplicarTextosFijos();
 seccionResumen();
 seccionGraficos();
 seccionGobiernos();
-seccionCobertura();
 seccionProgramas();
 seccionPoblacion();
 vistas();

@@ -28,8 +28,8 @@ window.DATOS_CIAS = {
     titulo_documento: 'Mapa de las Políticas Sociales en la Argentina. Política social a dos velocidades: inversión estable, trayectorias divergentes',
     editorial: 'CIAS-Fundar',
     anio_base: 2023,
-    // Cuando Comunicación publique el documento, pegar acá la URL (entre comillas).
-    documento_url: null
+    // URL del documento publicado
+    documento_url: 'https://fund.ar/wp-content/uploads/2026/11/Fundar_Mapa-de-las-politicas-sociales-en-la-Argentina-2026_CC-BY-NC-ND-4.0.pdf'
   },
 
   anios: [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
